@@ -67,17 +67,17 @@ public:
 
     sensor_msgs::msg::Imu imu;
 
-    imu.linear_acceleration_covariance[0] = linear_acceleration_stddev;
-    imu.linear_acceleration_covariance[4] = linear_acceleration_stddev;
-    imu.linear_acceleration_covariance[8] = linear_acceleration_stddev;
+    imu.linear_acceleration_covariance[0] = linear_acceleration_stddev * linear_acceleration_stddev;
+    imu.linear_acceleration_covariance[4] = linear_acceleration_stddev * linear_acceleration_stddev;
+    imu.linear_acceleration_covariance[8] = linear_acceleration_stddev * linear_acceleration_stddev;
 
-    imu.angular_velocity_covariance[0] = angular_velocity_stddev;
-    imu.angular_velocity_covariance[4] = angular_velocity_stddev;
-    imu.angular_velocity_covariance[8] = angular_velocity_stddev;
+    imu.angular_velocity_covariance[0] = angular_velocity_stddev * angular_velocity_stddev;
+    imu.angular_velocity_covariance[4] = angular_velocity_stddev * angular_velocity_stddev;
+    imu.angular_velocity_covariance[8] = angular_velocity_stddev * angular_velocity_stddev;
 
-    imu.orientation_covariance[0] = orientation_stddev;
-    imu.orientation_covariance[4] = orientation_stddev;
-    imu.orientation_covariance[8] = orientation_stddev;
+    imu.orientation_covariance[0] = orientation_stddev * orientation_stddev;
+    imu.orientation_covariance[4] = orientation_stddev * orientation_stddev;
+    imu.orientation_covariance[8] = orientation_stddev * orientation_stddev;
 
     sensor_msgs::msg::Temperature temperature_msg;
     temperature_msg.variance = 0;
@@ -106,6 +106,7 @@ public:
           if(package_length)
           {
             read = std::string(temp_buffer.begin(), temp_buffer.end());
+            read = read.substr(0, package_length);
             RCLCPP_DEBUG(get_logger(), "read %i new characters from serial port, adding to %i characters of old input.", (int)read.size(), (int)input.size());
             input += read;
             while (input.length() >= 28) // while there might be a complete package in input
