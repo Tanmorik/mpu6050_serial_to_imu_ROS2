@@ -1,0 +1,14 @@
+/**:
+  ros__parameters:
+    device_name: /dev/arduino_imu
+    baud_rate: 115200
+    #device_name: /dev/rc_receiver
+    #baud_rate: 1000000
+    flow_control: none
+    parity: none
+    stop_bits: "1"
+    broadcast_tf: false
+    linear_acceleration_stddev: 0.0039228
+    angular_velocity_stddev: 0.00087266
+    pitch_roll_stddev: 0.017453
+    yaw_stddev: 0.087266
