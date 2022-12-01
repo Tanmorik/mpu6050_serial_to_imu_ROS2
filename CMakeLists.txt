@@ -18,18 +18,22 @@ find_package(sensor_msgs)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-add_executable(imu src/mpu6050_serial_to_imu_node.cpp)
-ament_target_dependencies(imu rclcpp std_msgs std_srvs 
+add_executable(serial_to_imu_node src/mpu6050_serial_to_imu_node.cpp)
+ament_target_dependencies(serial_to_imu_node rclcpp std_msgs std_srvs 
 serial_driver tf2 tf2_ros
 sensor_msgs)
 
 
 install(TARGETS
-  imu
+  serial_to_imu_node
   DESTINATION lib/${PROJECT_NAME})
 install(
   DIRECTORY params/
-  DESTINATION params
+  DESTINATION share/${PROJECT_NAME}/params
+)
+install(
+  DIRECTORY launch/
+  DESTINATION share/${PROJECT_NAME}/launch
 )
 
 ament_package()

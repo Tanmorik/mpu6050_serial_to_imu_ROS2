@@ -1,9 +1,7 @@
 /**:
   ros__parameters:
-    device_name: /dev/arduino_imu
+    device_name: /dev/ttyUSB0
     baud_rate: 115200
-    #device_name: /dev/rc_receiver
-    #baud_rate: 1000000
     flow_control: none
     parity: none
     stop_bits: "1"
