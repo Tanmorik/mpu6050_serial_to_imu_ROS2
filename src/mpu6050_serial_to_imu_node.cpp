@@ -16,7 +16,7 @@ class Mpu6050SerialToImuNode : public rclcpp::Node
 {
 public:
   Mpu6050SerialToImuNode() : Node("imu"),
-  m_owned_ctx(new drivers::common::IoContext(2)),
+  m_owned_ctx(new drivers::common::IoContext(1)),
   m_serial_driver{new drivers::serial_driver::SerialDriver(*m_owned_ctx)}
   {
     get_params();
@@ -35,24 +35,25 @@ public:
       "temperature", rclcpp::QoS{50}
       );
 
+    connect();
+
+    rclcpp::Service<std_srvs::srv::Empty>::SharedPtr service =
+      create_service<std_srvs::srv::Empty>("set_zero_orientation", 
+      std::bind(&Mpu6050SerialToImuNode::set_zero_orientation, this, std::placeholders::_1, std::placeholders::_2));
+  }
+
+  void connect() 
+  {
     try {
       m_serial_driver->init_port(m_device_name, *m_device_config);
       if (!m_serial_driver->port()->is_open()) {
         m_serial_driver->port()->open();
-        // m_serial_driver->port()->async_receive(
-        //   std::bind(
-        //     &Mpu6050SerialToImuNode::receive_callback, this, std::placeholders::_1,
-        //     std::placeholders::_2));
       }
     } catch (const std::exception & ex) {
       RCLCPP_ERROR(
         get_logger(), "Error creating serial port: %s - %s",
         m_device_name.c_str(), ex.what());
     }
-
-    rclcpp::Service<std_srvs::srv::Empty>::SharedPtr service =
-      create_service<std_srvs::srv::Empty>("set_zero_orientation", 
-      std::bind(&Mpu6050SerialToImuNode::set_zero_orientation, this, std::placeholders::_1, std::placeholders::_2));
   }
 
   int run() {
@@ -115,15 +116,15 @@ public:
               data_packet_start = input.find("$\x03");
               if (data_packet_start != std::string::npos)
               {
-                RCLCPP_DEBUG(get_logger(), "found possible start of data packet at position %d", data_packet_start);
+                RCLCPP_DEBUG(get_logger(), "found possible start of data packet at position %ld", data_packet_start);
                 if ((input.length() >= data_packet_start + 28) && (input.compare(data_packet_start + 26, 2, "\r\n") == 0))  //check if positions 26,27 exist, then test values
                 {
                   RCLCPP_DEBUG(get_logger(), "seems to be a real data package: long enough and found end characters");
                   // get quaternion values
-                  int16_t w = (((0xff &(char)input[data_packet_start + 2]) << 8) | 0xff &(char)input[data_packet_start + 3]);
-                  int16_t x = (((0xff &(char)input[data_packet_start + 4]) << 8) | 0xff &(char)input[data_packet_start + 5]);
-                  int16_t y = (((0xff &(char)input[data_packet_start + 6]) << 8) | 0xff &(char)input[data_packet_start + 7]);
-                  int16_t z = (((0xff &(char)input[data_packet_start + 8]) << 8) | 0xff &(char)input[data_packet_start + 9]);
+                  int16_t w = (((0xff &(char)input[data_packet_start + 2]) << 8) | (0xff &(char)input[data_packet_start + 3]));
+                  int16_t x = (((0xff &(char)input[data_packet_start + 4]) << 8) | (0xff &(char)input[data_packet_start + 5]));
+                  int16_t y = (((0xff &(char)input[data_packet_start + 6]) << 8) | (0xff &(char)input[data_packet_start + 7]));
+                  int16_t z = (((0xff &(char)input[data_packet_start + 8]) << 8) | (0xff &(char)input[data_packet_start + 9]));
 
                   double wf = w/16384.0;
                   double xf = x/16384.0;
@@ -143,9 +144,9 @@ public:
                   differential_rotation = zero_orientation.inverse() * orientation;
 
                   // get gyro values
-                  int16_t gx = (((0xff &(char)input[data_packet_start + 10]) << 8) | 0xff &(char)input[data_packet_start + 11]);
-                  int16_t gy = (((0xff &(char)input[data_packet_start + 12]) << 8) | 0xff &(char)input[data_packet_start + 13]);
-                  int16_t gz = (((0xff &(char)input[data_packet_start + 14]) << 8) | 0xff &(char)input[data_packet_start + 15]);
+                  int16_t gx = (((0xff &(char)input[data_packet_start + 10]) << 8) | (0xff &(char)input[data_packet_start + 11]));
+                  int16_t gy = (((0xff &(char)input[data_packet_start + 12]) << 8) | (0xff &(char)input[data_packet_start + 13]));
+                  int16_t gz = (((0xff &(char)input[data_packet_start + 14]) << 8) | (0xff &(char)input[data_packet_start + 15]));
                   // calculate rotational velocities in rad/s
                   // without the last factor the velocities were too small
                   // http://www.i2cdevlib.com/forums/topic/106-get-angular-velocity-from-mpu-6050/
@@ -157,16 +158,16 @@ public:
                   double gzf = gz * (4000.0/65536.0) * (M_PI/180.0) * 25.0;
 
                   // get acelerometer values
-                  int16_t ax = (((0xff &(char)input[data_packet_start + 16]) << 8) | 0xff &(char)input[data_packet_start + 17]);
-                  int16_t ay = (((0xff &(char)input[data_packet_start + 18]) << 8) | 0xff &(char)input[data_packet_start + 19]);
-                  int16_t az = (((0xff &(char)input[data_packet_start + 20]) << 8) | 0xff &(char)input[data_packet_start + 21]);
+                  int16_t ax = (((0xff &(char)input[data_packet_start + 16]) << 8) | (0xff &(char)input[data_packet_start + 17]));
+                  int16_t ay = (((0xff &(char)input[data_packet_start + 18]) << 8) | (0xff &(char)input[data_packet_start + 19]));
+                  int16_t az = (((0xff &(char)input[data_packet_start + 20]) << 8) | (0xff &(char)input[data_packet_start + 21]));
                   // calculate accelerations in m/s²
                   double axf = ax * (8.0 / 65536.0) * 9.81;
                   double ayf = ay * (8.0 / 65536.0) * 9.81;
                   double azf = az * (8.0 / 65536.0) * 9.81;
 
                   // get temperature
-                  int16_t temperature = (((0xff &(char)input[data_packet_start + 22]) << 8) | 0xff &(char)input[data_packet_start + 23]);
+                  int16_t temperature = (((0xff &(char)input[data_packet_start + 22]) << 8) | (0xff &(char)input[data_packet_start + 23]));
                   double temperature_in_C = (temperature / 340.0 ) + 36.53;
                   RCLCPP_DEBUG_STREAM(get_logger(), "Temperature [in C] " << temperature_in_C);
 
@@ -188,7 +189,7 @@ public:
                   last_received_message_number = received_message_number;
 
                   // calculate measurement time
-                  rclcpp::Time measurement_time = now() + rclcpp::Duration(time_offset_in_seconds);
+                  rclcpp::Time measurement_time = now() + rclcpp::Duration::from_nanoseconds(time_offset_in_seconds);
 
                   // publish imu message
                   imu.header.stamp = measurement_time;
@@ -254,8 +255,12 @@ public:
               }
             }
           }
-        } //TODO: When Serialport is closed try to open it
-      }
+        } else {
+          RCLCPP_WARN(get_logger(), "Port is not open, make sure the device is available, try again to connect");
+          rclcpp::sleep_for(std::chrono::seconds(3));
+          connect();
+        }
+      } 
 
       catch (asio::system_error& e)
       {
