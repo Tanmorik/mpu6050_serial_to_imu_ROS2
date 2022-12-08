@@ -84,6 +84,8 @@ public:
     temperature_msg.variance = 0;
 
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+    tf_broadcaster_ =
+      std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     tf2::Transform transform;
     transform.setOrigin(tf2::Vector3(0,0,0));
 
